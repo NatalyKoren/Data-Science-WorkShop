@@ -1,2 +1,3 @@
 # Data-Science-WorkShop
-Data science workshop project on taxi fare prediction
+Data science workshop project
+Subject: Taxi Fare Prediction
