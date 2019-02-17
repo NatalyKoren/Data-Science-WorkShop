@@ -1,5 +1,9 @@
 
 def checkCountry(loc_name):
+    '''
+    Binning loc_name location to appropriate bucket. 
+    '''
+    
     loc = str(loc_name).lower()
     eng = ['london' , 'uk', 'united kingdom' , 'liverpool', 'england','great britain']
     ita = ['rome' , 'italy' , 'italia' , 'milano' , 'roma' , 'torino' ,'firenze' , 'napoli','bologna', 'pisa', 'palermo'
