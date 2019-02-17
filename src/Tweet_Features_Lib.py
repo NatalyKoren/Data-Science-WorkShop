@@ -8,7 +8,6 @@ Created on Sun Feb  3 10:06:06 2019
 import os
 import pandas as pd
 import numpy as np
-#from Date_Parser_Lib import convert_seconds_from_epoch_to_regular_date
 
 Date_Format = '%a %b %d %H:%M:%S +0000 %Y'
 
@@ -135,6 +134,8 @@ def tweet_dist_var(tweets_lst):
             text2 = preprocess(tweets_lst[j])
             res = levenshtein(text1,text2)
             dist.append(res)
+    if np.sum(dist)==0 or len(dist)==0:
+        return 0.0
     return np.var(dist)
 
 def calc_tweet_var_for_user(tweets,sample,sample_ids,fname,is_human):
@@ -180,7 +181,8 @@ def calc_human_tweet_var(file_list):
     tweets = pd.DataFrame()
     for file in file_list:
         print('loaded '+file)
-        tweets = pd.read_csv(file,usecols=['id','text','user_id'],dtype=str)
+        temp = pd.read_csv(file,usecols=['id','text','user_id'],dtype=str)
+        tweets = pd.concat([tweets,temp], ignore_index = True)
     tweets.dropna(subset=['text'],inplace=True) #remove tweets with no text
     users = pd.DataFrame()
     users['id'] = tweets['user_id'].unique()
