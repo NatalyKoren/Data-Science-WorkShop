@@ -11,6 +11,10 @@ import numpy as np
 
 Date_Format = '%a %b %d %H:%M:%S +0000 %Y'
 
+tweet_dtype_dictionary = {'id':str,'text':str,'user_is':str,'retweet_count':float,
+                              'favorite_count':float,'num_hashtags':float,'num_urls':float,
+                               'num_mentions':float,'created_at':str}
+
 def calc_avg_tweets_per_hour(tweet_df):
     """
     input : dataframe with all tweets of a certain user
@@ -229,9 +233,8 @@ def run_tweet_var_calculation():
     bot_tweets_lst = ['fake_followers_tweets.csv','social_spambots_1_tweets.csv','social_spambots_2_tweets.csv',
        'social_spambots_3_tweets.csv','traditional_spambots_1_tweets.csv']
     
-    
-    bot_tweet_var_dict = calc_bot_tweet_var(bot_tweets_lst)
     human_tweet_var_df = calc_human_tweet_var(human_tweets_lst)
+    bot_tweet_var_dict = calc_bot_tweet_var(bot_tweets_lst)
     
     human_users_lst = ['E13_users.csv','genuine_accounts_users.csv','TFP_users.csv']
     bot_users_lst = ['fake_followers_users.csv','social_spambots_1_users.csv','social_spambots_2_users.csv',
@@ -286,10 +289,11 @@ def generate_full_tweets_file(files_list):
     total_df = pd.DataFrame()
 
     for file in files_list:
-        df = pd.read_csv(file)        
+        df = pd.read_csv(file , usecols=['id','text','user_id','retweet_count','favorite_count','num_hashtags','num_urls',
+                                             'num_mentions','created_at'] ,dtype=tweet_dtype_dictionary)        
         total_df = pd.concat([total_df,df], ignore_index = True)
-
-    total_df.drop('Unnamed: 0', axis=1, inplace=True)
+    if 'Unnamed: 0' in total_df.columns:
+        total_df.drop('Unnamed: 0', axis=1, inplace=True)
     return total_df
 
 def get_full_files_path(file_name_pattern, files_list, beginning_path):

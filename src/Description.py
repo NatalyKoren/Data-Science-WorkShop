@@ -3,21 +3,57 @@
 ###########
 
 import pandas as pd
+import numpy as np
+import requests
 from textblob import TextBlob, Word
 import nltk
 from nltk.corpus import stopwords
 from sklearn.ensemble import RandomForestRegressor
-from yandex.Translater import Translater
 import General_Lib
 from sklearn.feature_extraction.text import CountVectorizer
 
 #############
+#  Globals  #
+#############
+
+#Yandex keys for translation and language detection
+apis = ["trnsl.1.1.20181221T214524Z.dca39366b84ef3a3.dbc320110157a98114e356f11d89c8078ae75642",
+'trnsl.1.1.20181223T091550Z.fad414f57a374543.ef18c91f748d5676217a0d388c582e42e0593ded',
+'trnsl.1.1.20181225T100830Z.72906db13bc1cf7f.a29466752cb4db906d6267cf8919b2fb8df68e2b',
+'trnsl.1.1.20181225T171502Z.d0e2e5e49b6327ce.a880a30d730aca7b2ae8e557bd3978d142cfde37',
+'trnsl.1.1.20181229T184159Z.73e537914b9b8f45.68f3d268c8811e497477fa58cd766830295b5efa'
+'trnsl.1.1.20181229T162700Z.2ec595d31e3b05a2.382e57e22cd57acf9b40965a3eeb3dd956cd4640',
+'trnsl.1.1.20181229T220553Z.2b7cb2cc8fe1ec11.adfcf5971bf3711ea2106d8d7b1e0033410da07b',
+'trnsl.1.1.20181230T061634Z.edae275a34543cd7.aac540e8fc8fc9c46137a99769ac4c6784892cc1',
+'trnsl.1.1.20181230T061634Z.d1055fa1222215c0.7155dd016e46c9a07dee1f974b7e7f0e2d56d3de',
+'trnsl.1.1.20181230T154004Z.d55d46d6d0c7835a.79f433014e4d99dab6e0ec81f11e8eb7a66b8ab8',
+'trnsl.1.1.20181230T153953Z.888e2261dd675927.cae8ce9760e10014f00fa28159aff15327332a5f',
+'trnsl.1.1.20181230T181439Z.03601281bf6411ed.cd0f443a861856251959403ef28ad636089f8123']
+
+#for language detection
+hint = ['ja', 'en', 'es','ru', 'sv', 'fr', 'nl','pl','pt','zh','tr','id', 'de', 'ko', 'da','ar', 'fil','el','it','gl']
+
+#############
 # Functions #
-############
+#############
+
+def get_next_key(curr_key):
+	'''
+	gets next key from apis list
+	Args: 
+		current key
+	Returns: 
+		next key if successul, else -1
+	'''
+	curr_ind = apis.index(curr_key)
+	if len(apis)>curr_ind+1:
+		print("changed key")
+		return apis[curr_ind+1]
+	else: return -1
 
 def translate(text,key):
 	'''
-	translate each description field to English.
+	translate a description field to English.
 	Args: 
 		text: a string represents an account's description
 		key: Yandex key for translation
@@ -30,11 +66,7 @@ def translate(text,key):
         'text' : text,
         'lang' : 'en'
     }
-	try:
-		response = requests.post(url,data=data)
-	except:
-		print('yandex error')
-		return {'code':0,'text':text}
+	response = requests.post(url,data=data)
 	response = response.json()
 	return response
 
@@ -46,25 +78,21 @@ def description_trans(total_data):
 	Returns: 
 		new data frame which icludes translated description.
 	'''
-	api_key1 = 'trnsl.1.1.20181229T184159Z.73e537914b9b8f45.68f3d268c8811e497477fa58cd766830295b5efa'
-	api_key2 = 'trnsl.1.1.20190103T080420Z.4ad459876bd69d62.be2c000d6183ba3815df6f135731377444176612'
 	trans_df = total_data[['id','lang','description','bot']].copy()
+	trans_df['translation'] = ''
+	total_data['description'].fillna('', inplace = True)
 	for i in range(len(trans_df)): #go over each description and translate it
-		#if trans_df['lang'][i] not in ['en','en-gb','en-GB','en-AU'] and 
 		if len(trans_df['description'][i]) > 0:
-			if i < 8000:
-				res = translate(trans_df['description'][i], api_key1)
-			else:
-				res = translate(trans_df['description'][i], api_key2)
+			res = translate(trans_df['description'][i], apis[0])
+			while res['code']==404:
+				api_key = get_next_key(api_key)
+				if api_key == -1:
+					print('no free keys')
+					break
+				res = translate(text, api_key)
 			if res['code'] == 200:
 				trans_df['translation'][i] = res['text']
-				n_chars += len(trans_df['description'][i])
-			elif res['code']==404:
-				print(i)
-				break
 			else:
-				print(res)
-				print(i)
 				continue
 		else:
 			trans_df['translation'][i] = ''
@@ -163,7 +191,26 @@ def find_important_words(X_train, y_train):
 									index = X_train.columns,
 									columns=['importance']).sort_values('importance',ascending=False)
 	return feature_importances.index.values[0:10]
-	
+
+def detect(text,key):
+	'''
+	detect the language of a description.
+	Args: 
+		text: description text
+		key: Yandex key
+	Returns: 
+		response of the translation
+	''' 
+	url = "https://translate.yandex.net/api/v1.5/tr.json/detect"
+	data={
+		'key' : api_key,
+		'text':text,
+		'hint':hint
+	}
+	response = requests.post(url,data=data)
+	response = response.json()
+	return response
+    
 def add_language_detection(description_df):
 	'''
 	detect the language of each description.
@@ -171,25 +218,24 @@ def add_language_detection(description_df):
 		description_df: description data frame
 	Returns: 
 		data frame which incudes a column of detected language
-	'''
-	tr = Translater()
-	tr.set_key('trnsl.1.1.20190103T074752Z.686ab94789bf0b7f.9742fafedd1a8e0c37fb37161b63560cef0bf71e')
+	''' 
 	description_df['description_lang'] = ''
-	for i in range(len(description_df['description'])):
-		if(i==8000):
-			tr.set_key('trnsl.1.1.20190103T080523Z.77e2122f33d25363.fa90023f8951b001cbac698cccaf809da6c6a85a')
-		if(description_df['description'].get(i) == ''):
-			description_df['description_lang'][i] = description_df['lang'].get(i)
-			continue;
-		try:
-			tr.set_text(description_df['description'].get(i))
-			lang = tr.detect_lang()
-			description_df['description_lang'][i] = lang
-		except:
-			print(i)
-			description_df['description_lang'][i] = description_df['lang'].get(i)
+	api_key = apis[0]
+	for i in range(len(description_df)):
+		if description_df['description_lang'][i] == '':
+			description_df['description_lang'][i] =  description_df['lang'].get(i)
+			continue
+		res = detect(description_df['description'].get(i), api_key)
+		while res['code'] == 404:
+			api_key = get_next_key(api_key)
+			if api_key == -1:
+				print('no free keys')
+				break
+			res = detect(description_df['description'].get(i), api_key)
+		if res['code'] == 200:
+			description_df['description_lang'][i] = res['lang']
 	return description_df
-	
+
 def find_important_words_from_bow(description_df):
 	'''
 	creating a bow and finding 10 most important words
