@@ -20,7 +20,7 @@ def calc_avg_tweets_per_hour(tweet_df):
     input : dataframe with all tweets of a certain user
     returns: the average number of tweets per hour this user posts
     """
-    count_df = tweet_df.groupby([pd.Grouper(key='timestamp',freq='H')]).size().reset_index(name='count')
+    count_df = tweet_df.groupby([pd.Grouper(key='created_at',freq='H')]).size().reset_index(name='count')
     count_df = count_df[count_df['count']>0]
     avg = count_df['count'].mean()
     return avg
@@ -291,7 +291,7 @@ def generate_full_tweets_file(files_list):
     for file in files_list:
         df = pd.read_csv(file , usecols=['id','text','user_id','retweet_count','favorite_count','num_hashtags','num_urls',
                                              'num_mentions','created_at'] ,dtype=tweet_dtype_dictionary)        
-        total_df = pd.concat([total_df,df], ignore_index = True)
+        total_df = pd.concat([total_df,df], ignore_index = True, sort=False)
     if 'Unnamed: 0' in total_df.columns:
         total_df.drop('Unnamed: 0', axis=1, inplace=True)
     return total_df
