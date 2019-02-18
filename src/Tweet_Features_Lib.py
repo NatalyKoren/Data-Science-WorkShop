@@ -236,6 +236,7 @@ def run_tweet_var_calculation():
     human_tweet_var_df = calc_human_tweet_var(human_tweets_lst)
     bot_tweet_var_dict = calc_bot_tweet_var(bot_tweets_lst)
     
+    usr_dir = '../'
     human_users_lst = ['E13_users.csv','genuine_accounts_users.csv','TFP_users.csv']
     bot_users_lst = ['fake_followers_users.csv','social_spambots_1_users.csv','social_spambots_2_users.csv',
        'social_spambots_3_users.csv','traditional_spambots_1_users.csv','traditional_spambots_2_users.csv',
@@ -243,7 +244,8 @@ def run_tweet_var_calculation():
     
     total_users_human = pd.DataFrame()
     for file in human_users_lst:
-        tmp_df = pd.read_csv(file,usecols=['id'],dtype=str)
+        print('loading '+ file)
+        tmp_df = pd.read_csv(usr_dir+file,usecols=['id'],dtype=str)
         total_users_human = pd.concat([total_users_human,tmp_df],ignore_index=True)
     total_users_human['bot'] = 0
     
@@ -255,7 +257,7 @@ def run_tweet_var_calculation():
     total_users_bots = pd.DataFrame()
     for file in bot_users_lst:
         fname = file.replace('_users.csv','')
-        tmp_df = pd.read_csv(file,usecols=['id'],dtype=str)
+        tmp_df = pd.read_csv(usr_dir+file,usecols=['id'],dtype=str)
         if fname not in ['traditional_spambots_2','traditional_spambots_3','traditional_spambots_4']:
             tmp_df = pd.merge(tmp_df,bot_tweet_var_dict[fname],how='outer')
             tmp_df['tweet_var'].fillna(mean_vals[fname],inplace=True)

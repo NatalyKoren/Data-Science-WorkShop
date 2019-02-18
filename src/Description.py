@@ -81,17 +81,20 @@ def description_trans(total_data):
 	trans_df = total_data[['id','lang','description','bot']].copy()
 	trans_df['translation'] = ''
 	trans_df['description'].fillna('', inplace = True)
+	api_key = apis[0]
 	for i in range(len(trans_df)): #go over each description and translate it
 		if len(trans_df['description'][i]) > 0:
-			res = translate(trans_df['description'][i], apis[0])
+			res = translate(trans_df['description'][i], api_key)
 			while res['code']==404:
 				api_key = get_next_key(api_key)
 				if api_key == -1:
 					print('no free keys')
 					break
-				res = translate(text, api_key)
+				res = translate(trans_df['description'][i], api_key)
 			if res['code'] == 200:
 				trans_df['translation'][i] = res['text']
+				if 'text' not in res:
+					print(res)
 			else:
 				continue
 		else:
