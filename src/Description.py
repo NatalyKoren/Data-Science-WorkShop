@@ -80,7 +80,7 @@ def description_trans(total_data):
 	'''
 	trans_df = total_data[['id','lang','description','bot']].copy()
 	trans_df['translation'] = ''
-	total_data['description'].fillna('', inplace = True)
+	trans_df['description'].fillna('', inplace = True)
 	for i in range(len(trans_df)): #go over each description and translate it
 		if len(trans_df['description'][i]) > 0:
 			res = translate(trans_df['description'][i], apis[0])
