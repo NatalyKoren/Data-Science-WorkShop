@@ -271,13 +271,13 @@ def run_tweet_var_calculation():
     total_users_human.fillna(human_mean_val,axis=1,inplace=True)
     
     
-    total_users = pd.concat([total_users_human,total_users_bots], ignore_index = True)
+    total_users = pd.concat([total_users_human,total_users_bots], ignore_index = True, sort=False)
     total_users['500<var<750'] = 2
     for i in range(total_users.shape[0]):
         total_users['500<var<750'][i] = 1 if 500 < total_users['tweet_var'][i] < 750 else 0
     ##also calculate here the other tweet features
     total_users.to_csv('tweet_var+range_example.csv')
-    message="""tweet_var_example.csv is in "sample_lev" directory.\n
+    message="""tweet_var_example.csv is in "Tweets" directory withtin "Datasets".\n
     The sample is calculated on a really small example, since tweet_var calculation is might takes a long time.\n
     The tweet_var of users not in sample is filled with mean."""
     print(message)        
