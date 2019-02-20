@@ -176,7 +176,7 @@ def calc_bot_tweet_var(file_list): #return a dict containig file name as key and
         sample['tweet_var'] = 0.0
         print(str(sample.shape[0])+' users to process')
         sample_ids = sample['id'].tolist()
-        fname = file.replace('_tweets.csv','') #for debugging add _try
+        fname = file.replace('_tweets.csv','')
         df_d[fname]= calc_tweet_var_for_user(tweets,sample,sample_ids,fname,is_human=0)
     return df_d
 
