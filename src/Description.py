@@ -78,7 +78,7 @@ def description_trans(total_data):
 	Returns: 
 		new data frame which icludes translated description.
 	'''
-	trans_df = total_data[['id','lang','description','bot']].copy()
+	trans_df = total_data[['id','lang','description','bot','test_set_1','test_set_2']].copy()
 	trans_df['translation'] = ''
 	trans_df['description'].fillna('', inplace = True)
 	api_key = apis[0]
@@ -92,7 +92,7 @@ def description_trans(total_data):
 					break
 				res = translate(trans_df['description'][i], api_key)
 			if res['code'] == 200:
-				trans_df['translation'][i] = res['text']
+				trans_df['translation'][i] = res['text'][0]
 				if 'text' not in res:
 					print(res)
 			else:
@@ -159,10 +159,10 @@ def add_columns_for_division_and_merging(description_df,bow,dictionary):
 	mat_bot = description_df['bot'].as_matrix()
 	mat_index = description_df['id'].as_matrix()
 	count_vectors_df = pd.DataFrame(bow,columns = dictionary)
-	count_vectors_df.insert(loc= 0, column='main_id', value=mat_index)
 	count_vectors_df.insert(loc= len(bow[0]),column='test_set_1', value=mat_test_set_1)
 	count_vectors_df.insert(loc= len(bow[0])+1,column='test_set_2', value=mat_test_set_2)
 	count_vectors_df.insert(loc= len(bow[0])+2,column='is_bot', value=mat_bot)
+	count_vectors_df.insert(loc= 0, column='main_id', value=mat_index)
 	return count_vectors_df
 	
 	
@@ -249,13 +249,13 @@ def find_important_words_from_bow(description_df):
 	'''
 	# # # # creating BoW # # # # #
 	vectorizer = CountVectorizer(preprocessor=preprocess)
-	bow = vectorizer.fit_transform(description_df['translation'].values.astype(str)).toarray()
+	bow = vectorizer.fit_transform(description_df['translation'].astype(str)).toarray()
 	dictionary = vectorizer.get_feature_names()
 
 	# # # # add columns for division and divide data # # # # #
 	count_vectors_df = add_columns_for_division_and_merging(description_df,bow,dictionary)
 	cv_train_data, cv_test_set_1, cv_test_set_2 = General_Lib.train_test_division(count_vectors_df)
-	X_cv_train, y_cv_train = X_y_division(cv_train_data, cols_to_remove = ['main_id'])
+	X_cv_train, y_cv_train = X_y_division(cv_train_data, cols_to_remove = ['main_id','is_bot'])
 
 	# # # # find and extract most important words # # # # #
 	important_words = find_important_words(X_cv_train, y_cv_train)
